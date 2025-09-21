@@ -13,12 +13,15 @@
     "prettier:fix": "prettier --write \"src/**/(*.tsx|*.ts|*.css|*.scss)\""
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.89.0",
     "@tanstack/react-query-devtools": "^5.89.0",
     "axios": "^1.12.2",
+    "framer-motion": "^12.23.16",
     "lodash": "^4.17.21",
+    "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.62.0",
