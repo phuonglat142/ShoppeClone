@@ -1,9 +1,14 @@
 import axios, { AxiosError, HttpStatusCode, type AxiosInstance } from 'axios'
 import { toast } from 'react-toastify'
+import type { AuthResponse } from '../types/auth.type'
+import { clearLS, getAccessTokenFromLs, setAccessTokenToLs, setProfileFromLS } from './auth'
+import path from '../constants/path'
 
 class Http {
   instance: AxiosInstance
+  private accessToken: string
   constructor() {
+    this.accessToken = getAccessTokenFromLs()
     this.instance = axios.create({
       baseURL: 'https://api-ecom.duthanhduoc.com',
       timeout: 10000,
@@ -12,8 +17,31 @@ class Http {
       }
     })
 
+    this.instance.interceptors.request.use(
+      (config) => {
+        if (this.accessToken && config.headers) {
+          config.headers.Authorization = this.accessToken
+          return config
+        }
+        return config
+      },
+      (error) => {
+        return Promise.reject(error)
+      }
+    )
+
     this.instance.interceptors.response.use(
-      function onFulfilled(response) {
+      (response) => {
+        const { url } = response.config
+        if (url === path.login || url === path.register) {
+          const data = response.data as AuthResponse
+          this.accessToken = data.data.access_token
+          setAccessTokenToLs(this.accessToken)
+          setProfileFromLS(data.data.user)
+        } else if (url === path.logout) {
+          this.accessToken = ''
+          clearLS()
+        }
         return response
       },
       function onRejected(error: AxiosError) {

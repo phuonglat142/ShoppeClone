@@ -1,16 +1,23 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { loginSchema, type Schema } from '../../utils/rule'
 import { useMutation } from '@tanstack/react-query'
 import { login } from '../../apis/auth.api'
 import { isAxiosUnprocessableEntityError } from '../../utils/util'
-import type { ResponseApi } from '../../types/utils.type'
+import type { ErrorResponse } from '../../types/utils.type'
 import Input from '../../components/Input/Input'
+import { useContext } from 'react'
+import { AppContext } from '../../contexts/app.context'
+import Button from '../../components/Button'
 
 type FormData = Omit<Schema, 'confirm_password'>
 
 const Login = () => {
+  const { setIsAuthenticated, setProfile } = useContext(AppContext)
+
+  const navigate = useNavigate()
+
   const {
     setError,
     register,
@@ -27,10 +34,12 @@ const Login = () => {
   const onSubmit = handleSubmit((data) => {
     loginMutation.mutate(data, {
       onSuccess: (data) => {
-        console.log(data)
+        setIsAuthenticated(true)
+        setProfile(data.data.data.user)
+        navigate('/')
       },
       onError: (error) => {
-        if (isAxiosUnprocessableEntityError<ResponseApi<FormData>>(error)) {
+        if (isAxiosUnprocessableEntityError<ErrorResponse<FormData>>(error)) {
           const formError = error.response?.data.data
           if (formError) {
             Object.keys(formError).forEach((key) => {
@@ -71,12 +80,14 @@ const Login = () => {
                 autoComplete='on'
               />
               <div className='mt-3'>
-                <button
+                <Button
                   type='submit'
-                  className='w-full text-center py-4 px-2 uppercase bg-red-500 text-white text-sm hover:bg-red-600'
+                  isLoading={loginMutation.isPending}
+                  disabled={loginMutation.isPending}
+                  className='w-full text-center py-4 px-2 uppercase bg-red-500 text-white text-sm hover:bg-red-600 flex items-center justify-center'
                 >
                   Đăng nhập
-                </button>
+                </Button>
               </div>
               <div className='flex items-center justify-center mt-8'>
                 <span className='text-gray-400'>Bạn đã chưa có tài khoản ?</span>

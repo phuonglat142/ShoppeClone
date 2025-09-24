@@ -2,14 +2,33 @@ import { ChevronDown, Globe, Search, ShoppingCart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import reactSvg from '~/assets/react.png'
 import Popover from '../Popover'
+import { useMutation } from '@tanstack/react-query'
+import { logout } from '../../apis/auth.api'
+import { useContext } from 'react'
+import { AppContext } from '../../contexts/app.context'
+import path from '../../constants/path'
 
 const Header = () => {
+  const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
+
+  const logoutMutaion = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      setIsAuthenticated(false)
+      setProfile(null)
+    }
+  })
+
+  const handleLogout = () => {
+    logoutMutaion.mutate()
+  }
+
   return (
     <div className='pb-5 pt-2 bg-[linear-gradient(-180deg,#f53d2d,#f63)] text-white'>
       <div className='container'>
         <div className='flex justify-end'>
           <Popover
-            className='flex items-center py-1 hover:text-gray-300 cursor-pointer'
+            className='flex items-center py-1 hover:text-white/70 cursor-pointer'
             renderPopover={
               <div className='bg-white relative shadow-sm rounded-sm border border-gray-200'>
                 <div className='flex flex-col py-2 pr-28 pl-3'>
@@ -23,34 +42,50 @@ const Header = () => {
             <span className='mx-1'>Tiếng Việt</span>
             <ChevronDown />
           </Popover>
-
-          <Popover
-            className='flex items-center py-1 hover:text-gray-300 cursor-pointer ml-6'
-            renderPopover={
-              <div className='bg-white relative shadow-sm rounded-sm border border-gray-200'>
-                <Link
-                  to='/'
-                  className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 w-full text-left'
-                >
-                  Tài khoản của tôi
-                </Link>
-                <Link
-                  to='/'
-                  className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 w-full text-left'
-                >
-                  Đơn mua
-                </Link>
-                <button className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 w-full text-left'>
-                  Đăng xuất
-                </button>
+          {isAuthenticated && (
+            <Popover
+              className='flex items-center py-1 hover:text-white/70 cursor-pointer ml-6'
+              renderPopover={
+                <div className='bg-white relative shadow-sm rounded-sm border border-gray-200'>
+                  <Link
+                    to={path.profile}
+                    className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 w-full text-left'
+                  >
+                    Tài khoản của tôi
+                  </Link>
+                  <Link
+                    to='/'
+                    className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 w-full text-left'
+                  >
+                    Đơn mua
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className='block py-3 px-4 hover:bg-slate-100 bg-white hover:text-cyan-500 w-full text-left'
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              }
+            >
+              <div className='w-6 h-6 mr-2 flex-shrink-0'>
+                <img src={reactSvg} alt='avatar' className='w-full h-full object-cover rounded-full' />
               </div>
-            }
-          >
-            <div className='w-6 h-6 mr-2 flex-shrink-0'>
-              <img src={reactSvg} alt='avatar' className='w-full h-full object-cover rounded-full' />
+              <div>{profile?.email}</div>
+            </Popover>
+          )}
+
+          {!isAuthenticated && (
+            <div className='flex items-center'>
+              <Link to={path.register} className='mx-3 capitalize hover:text-white/70'>
+                Đăng ký
+              </Link>
+              <div className='border-r-[1px] border-r-white/40 h-4' />
+              <Link to={path.login} className='mx-3 capitalize hover:text-white/70'>
+                Đăng nhập
+              </Link>
             </div>
-            <div>Thanh Phương</div>
-          </Popover>
+          )}
         </div>
         <div className='grid grid-cols-12 gap-4 mt-4 items-end'>
           <Link to='/' className='col-span-2'>
