@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
-import { loginSchema, type Schema } from '../../utils/rule'
+import { schema, type Schema } from '../../utils/rule'
 import { useMutation } from '@tanstack/react-query'
 import authApi from '../../apis/auth.api'
 import { isAxiosUnprocessableEntityError } from '../../utils/util'
@@ -11,7 +11,9 @@ import { useContext } from 'react'
 import { AppContext } from '../../contexts/app.context'
 import Button from '../../components/Button'
 
-type FormData = Omit<Schema, 'confirm_password'>
+type FormData = Pick<Schema, 'email' | 'password'>
+
+const loginSchema = schema.pick(['email', 'password'])
 
 const Login = () => {
   const { setIsAuthenticated, setProfile } = useContext(AppContext)

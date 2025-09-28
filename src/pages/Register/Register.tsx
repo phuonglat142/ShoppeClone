@@ -12,6 +12,9 @@ import { useContext } from 'react'
 import { AppContext } from '../../contexts/app.context'
 import Button from '../../components/Button'
 
+type FormData = Pick<Schema, 'email' | 'password' | 'confirm_password'>
+const registerSchema = schema.pick(['email', 'password', 'confirm_password'])
+
 const Register = () => {
   const { setIsAuthenticated, setProfile } = useContext(AppContext)
 
@@ -22,8 +25,8 @@ const Register = () => {
     handleSubmit,
     setError,
     formState: { errors }
-  } = useForm<Schema>({
-    resolver: yupResolver(schema)
+  } = useForm<FormData>({
+    resolver: yupResolver(registerSchema)
   })
 
   const registerAccountMutation = useMutation({
@@ -43,8 +46,8 @@ const Register = () => {
           const formError = error.response?.data.data
           if (formError) {
             Object.keys(formError).forEach((key) => {
-              setError(key as keyof Omit<Schema, 'confirm_password'>, {
-                message: formError[key as keyof Omit<Schema, 'confirm_password'>],
+              setError(key as keyof Omit<FormData, 'confirm_password'>, {
+                message: formError[key as keyof Omit<FormData, 'confirm_password'>],
                 type: 'Server'
               })
             })
