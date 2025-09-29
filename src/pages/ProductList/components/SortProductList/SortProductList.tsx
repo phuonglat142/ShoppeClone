@@ -1,11 +1,11 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { QueryConfig } from '../ProductList'
-import { sortBy, order as orderConstant } from '../../../constants/product'
-import type { ProductListConfig } from '../../../types/product.type'
 import classNames from 'classnames'
 import { createSearchParams, Link, useNavigate } from 'react-router-dom'
-import path from '../../../constants/path'
 import { omit } from 'lodash'
+import type { QueryConfig } from '../../ProductList'
+import type { ProductListConfig } from '../../../../types/product.type'
+import { sortBy, order as orderConstant } from '../../../../constants/product'
+import path from '../../../../constants/path'
 
 interface Props {
   queryConfig: QueryConfig
