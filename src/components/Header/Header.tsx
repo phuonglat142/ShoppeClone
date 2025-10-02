@@ -1,15 +1,41 @@
 import { ChevronDown, Globe, Search, ShoppingCart } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { createSearchParams, Link, useNavigate } from 'react-router-dom'
 import reactSvg from '~/assets/react.png'
 import Popover from '../Popover'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import authApi from '../../apis/auth.api'
 import { useContext } from 'react'
 import { AppContext } from '../../contexts/app.context'
 import path from '../../constants/path'
+import useQueryConfig from '../../hooks/useQueryConfig'
+import { useForm } from 'react-hook-form'
+import { schema, type Schema } from '../../utils/rule'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { omit } from 'lodash'
+import { purchasesStatus } from '../../constants/purchase'
+import purchaseApi from '../../apis/purchase.api'
+import noproduct from '~/assets/images/noproduct.png'
+import { formatCurrency } from '../../utils/util'
+
+type FormData = Pick<Schema, 'name'>
+
+const nameSchema = schema.pick(['name'])
+
+const MAX_PURCHASE = 5
 
 const Header = () => {
   const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
+
+  const queryConfig = useQueryConfig()
+
+  const navigate = useNavigate()
+
+  const { register, handleSubmit } = useForm<FormData>({
+    defaultValues: {
+      name: ''
+    },
+    resolver: yupResolver(nameSchema)
+  })
 
   const logoutMutaion = useMutation({
     mutationFn: authApi.logout,
@@ -19,9 +45,36 @@ const Header = () => {
     }
   })
 
+  //Khi chúng ta chuyển trang thì header chỉ bị re-render
+  // chứ không bị unmount và mount lại
+  // (Tất nhiên là trừ trường hợp logout rồi nhảy sang RegisterLayout rồi nhảy lại)
+  // Nên các query này sẽ không bị inactive => Không bị gọi lại => không cần set stale: infinity
+  const { data: purchasesInCartData } = useQuery({
+    queryKey: ['purchases', { status: purchasesStatus.inCart }],
+    queryFn: () => purchaseApi.getPurchaseList({ status: purchasesStatus.inCart })
+  })
+
+  const purchasesInCart = purchasesInCartData?.data.data
+
   const handleLogout = () => {
     logoutMutaion.mutate()
   }
+
+  const onSubmitSearch = handleSubmit((data) => {
+    const config = queryConfig.order
+      ? omit(
+          {
+            ...queryConfig,
+            name: data.name
+          },
+          ['order', 'sort_by']
+        )
+      : { ...queryConfig, name: data.name }
+    navigate({
+      pathname: path.home,
+      search: createSearchParams(config).toString()
+    })
+  })
 
   return (
     <div className='pb-5 pt-2 bg-[linear-gradient(-180deg,#f53d2d,#f63)] text-white'>
@@ -95,13 +148,13 @@ const Header = () => {
               </g>
             </svg>
           </Link>
-          <form className='col-span-9'>
+          <form className='col-span-9' onSubmit={onSubmitSearch}>
             <div className='bg-white rounded-sm p-1 flex'>
               <input
-                name='search'
                 type='text'
                 placeholder='Free Ship Đơn Từ 0Đ'
                 className='text-black px-3 py-2 flex-grow border-none outline-none bg-transparent'
+                {...register('name')}
               />
               <button className='rounded-sm py-2 px-6 flex-shrink-0 bg-orange hover:opacity-90'>
                 <Search />
@@ -112,116 +165,52 @@ const Header = () => {
             <Popover
               renderPopover={
                 <div className='bg-white relative shadow-sm rounded-sm border border-gray-200 text-sm max-w-[400px]'>
-                  <div className='p-2'>
-                    <div className='text-gray-400 capitalize'>Sản phẩm mới thêm</div>
-                    <div className='mt-5'>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/cn-11134207-7r98o-lksxo7r8h78h7c@resize_w80_nl.webp'
-                            alt='anh'
-                            className='w-11 h-11 object-cover'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>
-                            Bộ theo dõi Bluetooth MiLi MiTag, Công cụ tìm chìa khóa và định vị thú cưng cho chìa khóa,
-                            túi xách và hơn thế nữa, Phạm vi lên tới 120m
+                  {purchasesInCart ? (
+                    <div className='p-2'>
+                      <div className='text-gray-400 capitalize'>Sản phẩm mới thêm</div>
+                      <div className='mt-5'>
+                        {purchasesInCart.slice(0, MAX_PURCHASE).map((purchase) => (
+                          <div className='mt-2 py-2 flex hover:bg-gray-100' key={purchase._id}>
+                            <div className='flex-shrink-0'>
+                              <img
+                                src={purchase.product.image}
+                                alt={purchase.product.name}
+                                className='w-11 h-11 object-cover'
+                              />
+                            </div>
+                            <div className='flex-grow ml-2 overflow-hidden'>
+                              <div className='truncate'>{purchase.product.name}</div>
+                            </div>
+                            <div className='ml-2 flex-shrink-0'>
+                              <span className='text-orange'>₫{formatCurrency(purchase.product.price)}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>218.900₫</span>
-                        </div>
+                        ))}
                       </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/cn-11134207-7r98o-lksxo7r8h78h7c@resize_w80_nl.webp'
-                            alt='anh'
-                            className='w-11 h-11 object-cover'
-                          />
+                      <div className='flex mt-6 items-center justify-between'>
+                        <div className='capitalize text-xs text-gray-500'>
+                          {purchasesInCart.length > MAX_PURCHASE ? purchasesInCart.length - MAX_PURCHASE : ''} Thêm vào
+                          giỏ hàng
                         </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>
-                            Bộ theo dõi Bluetooth MiLi MiTag, Công cụ tìm chìa khóa và định vị thú cưng cho chìa khóa,
-                            túi xách và hơn thế nữa, Phạm vi lên tới 120m, Chống nước, Công cụ tìm điện thoại, Tương
-                            thích với iOS
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>218.900₫</span>
-                        </div>
-                      </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/cn-11134207-7r98o-lksxo7r8h78h7c@resize_w80_nl.webp'
-                            alt='anh'
-                            className='w-11 h-11 object-cover'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>
-                            Bộ theo dõi Bluetooth MiLi MiTag, Công cụ tìm chìa khóa và định vị thú cưng cho chìa khóa,
-                            túi xách và hơn thế nữa, Phạm vi lên tới 120m, Chống nước, Công cụ tìm điện thoại, Tương
-                            thích với iOS
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>218.900₫</span>
-                        </div>
-                      </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/cn-11134207-7r98o-lksxo7r8h78h7c@resize_w80_nl.webp'
-                            alt='anh'
-                            className='w-11 h-11 object-cover'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>
-                            Bộ theo dõi Bluetooth MiLi MiTag, Công cụ tìm chìa khóa và định vị thú cưng cho chìa khóa,
-                            túi xách và hơn thế nữa, Phạm vi lên tới 120m, Chống nước, Công cụ tìm điện thoại, Tương
-                            thích với iOS
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>218.900₫</span>
-                        </div>
-                      </div>
-                      <div className='mt-4 flex'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://down-vn.img.susercontent.com/file/cn-11134207-7r98o-lksxo7r8h78h7c@resize_w80_nl.webp'
-                            alt='anh'
-                            className='w-11 h-11 object-cover'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>
-                            Bộ theo dõi Bluetooth MiLi MiTag, Công cụ tìm chìa khóa và định vị thú cưng cho chìa khóa,
-                            túi xách và hơn thế nữa, Phạm vi lên tới 120m, Chống nước, Công cụ tìm điện thoại, Tương
-                            thích với iOS
-                          </div>
-                        </div>
-                        <div className='ml-2 flex-shrink-0'>
-                          <span className='text-orange'>218.900₫</span>
-                        </div>
+                        <button className='capitalize bg-orange hover:bg-opacity-90 px-4 py-2 rounded-sm text-white'>
+                          Xem giỏ hàng
+                        </button>
                       </div>
                     </div>
-                    <div className='flex mt-6 items-center justify-between'>
-                      <div className='capitalize text-xs text-gray-500'>Thêm vào giỏ hàng</div>
-                      <button className='capitalize bg-orange hover:bg-opacity-90 px-4 py-2 rounded-sm text-white'>
-                        Xem giỏ hàng
-                      </button>
+                  ) : (
+                    <div className='p-2 w-[300px] h-[300px] flex items-center justify-center'>
+                      <img src={noproduct} alt='no product' className='w-24 h-24' />
+                      <div className='mt-3 capitalize'>Chưa có sản phẩm</div>
                     </div>
-                  </div>
+                  )}
                 </div>
               }
             >
-              <Link to='/'>
+              <Link to='/' className='relative'>
                 <ShoppingCart className='h-8 w-8' />
+                <span className='absolute top-[-5px] left-[17px] rounded-full px-[9px] py-[1.25px] bg-white text-orange text-xs'>
+                  {purchasesInCart?.length}
+                </span>
               </Link>
             </Popover>
           </div>

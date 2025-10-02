@@ -1,5 +1,4 @@
 import { createSearchParams, Link, useNavigate } from 'react-router-dom'
-import type { QueryConfig } from '../../ProductList'
 import type { Category } from '../../../../types/category.type'
 import type { NoUndefinedField } from '../../../../types/utils.type'
 import { schema, type Schema } from '../../../../utils/rule'
@@ -11,6 +10,7 @@ import classNames from 'classnames'
 import InputNumber from '../../../../components/InputNumber'
 import Button from '../../../../components/Button'
 import RatingStars from '../../../../components/RatingStars'
+import type { QueryConfig } from '../../../../hooks/useQueryConfig'
 
 interface Props {
   queryConfig: QueryConfig

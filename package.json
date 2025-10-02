@@ -20,6 +20,7 @@
     "@tanstack/react-query-devtools": "^5.89.0",
     "axios": "^1.12.2",
     "classnames": "^2.5.1",
+    "dompurify": "^3.2.7",
     "framer-motion": "^12.23.16",
     "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",

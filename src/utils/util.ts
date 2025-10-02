@@ -13,6 +13,24 @@ export function formatCurrency(currency: number) {
 }
 
 export function formatNumberToSocialStyle(value: number) {
-  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value).replace('.', ',').toLowerCase()
+  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 })
+    .format(value)
+    .replace('.', ',')
+    .toLowerCase()
 }
 
+export function rateSale(originalPrice: number, salePrice: number) {
+  return Math.round(((originalPrice - salePrice) / originalPrice) * 100) + '%'
+}
+
+const removeSpecialCharacter = (str: string) =>
+  str.replace(/!|@|%|\^|\*|\(|\)|\+|\=|\<|\>|\?|\/|,|\.|\:|\;|\'|\"|\&|\#|\[|\]|~|\$|_|`|-|{|}|\||\\/g, '')
+
+export const generateNameId = ({ name, id }: { name: string; id: string }) => {
+  return removeSpecialCharacter(name).replace(/\s/g, '-') + `-i.${id}`
+}
+
+export const getIdFromNameId = (nameId: string) => {
+  const arr = nameId.split('-i.')
+  return arr[arr.length - 1]
+}
