@@ -30,7 +30,7 @@ const Login = () => {
   })
 
   const loginMutation = useMutation({
-    mutationFn: (body: Omit<Schema, 'confirm_password'>) => authApi.login(body)
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.login(body)
   })
 
   const onSubmit = handleSubmit((data) => {

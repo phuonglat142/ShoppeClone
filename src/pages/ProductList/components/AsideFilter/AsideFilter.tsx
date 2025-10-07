@@ -11,6 +11,7 @@ import InputNumber from '../../../../components/InputNumber'
 import Button from '../../../../components/Button'
 import RatingStars from '../../../../components/RatingStars'
 import type { QueryConfig } from '../../../../hooks/useQueryConfig'
+import InputV2 from '../../../../components/InputV2'
 
 interface Props {
   queryConfig: QueryConfig
@@ -141,24 +142,16 @@ const AsideFilter = ({ queryConfig, categories }: Props) => {
         <div>Khoảng giá</div>
         <form className='mt-2' onSubmit={onSubmit}>
           <div className='flex items-start'>
-            <Controller
+            <InputV2
               control={control}
               name='price_min'
-              render={({ field }) => {
-                return (
-                  <InputNumber
-                    type='text'
-                    className='grow'
-                    placeholder='₫ TỪ'
-                    classNameError='hidden'
-                    classNameInput='p-1 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-sm'
-                    {...field}
-                    onChange={(event) => {
-                      field.onChange(event)
-                      trigger('price_max')
-                    }}
-                  />
-                )
+              type='number'
+              className='grow'
+              placeholder='₫ TỪ'
+              classNameError='hidden'
+              classNameInput='p-1 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-sm'
+              onChange={() => {
+                trigger('price_max')
               }}
             />
 
